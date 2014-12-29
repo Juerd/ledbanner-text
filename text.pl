@@ -2,6 +2,7 @@
 use strict;
 use Time::HiRes qw(sleep);
 use Image::Magick;
+use File::Slurp;
 
 undef $/;
 $| = 1;
@@ -9,51 +10,73 @@ $| = 1;
 sub read_image {
     my ($color, $text) = @_;
 
-    # save image to string
-    my $rgb_string = "";
-    open IMAGE, '>', \$rgb_string;
-
     # create new image structure
     my $image = Image::Magick->new;
     #$image->Set(debug => 'All');
+    $image->Set(size => '5000x8', depth => 8);
 
-    # create empty image & query width
-    $image->ReadImage('canvas:black');
-    my ($x_ppem, $y_ppem, $ascender, $descender, $width, $height, $max_advance) = $image->QueryFontMetrics(
-        gravity => 'center',
-        font => 'nokiafc22.ttf',
-        background => 'black',
-        pointsize => 8,
-        fill => $color,
-        kerning => 0,
-        'interword-spacing' => 5,
-        text => $text);
+    my @pieces = split(/&:&/, $text);
+    my @width;
+    my @colors;
+    my $allwidth = 0;
+    my $i = 0;
+    foreach my $piece (@pieces) {
+       $colors[$i] = $color;
+       if ($piece =~ s/(#[0-9A-Fa-f]{6})//) {
+         $colors[$i] = $1;
+       }
+       print STDERR "color piece ".$i." = ".$colors[$i].": ".$piece."\n";
+
+       # create empty image & query width
+       $image->ReadImage('canvas:black');
+       my ($x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance) = $image->QueryFontMetrics(
+         gravity => 'center',
+         font => 'nokiafc22.ttf',
+         pointsize => 8,
+         fill => $color,
+         kerning => 0,
+         'interword-spacing' => 5,
+         text => $piece);
+       $width[$i++] = $textwidth;
+       $allwidth += $textwidth+2;
+    }
+    $allwidth += 50;
 
     # create new empty image with width
-    $image->Set(size => $width . 'x8', depth => 8);
+    $image = Image::Magick->new;
+    $image->Set(size => $allwidth . 'x8', depth => 8);
     $image->ReadImage('canvas:black');
 
-    # write text
-    $image->Annotate(
-        gravity => 'center',
-        font => 'nokiafc22.ttf',
-        background => 'black',
-        pointsize => 8,
-        fill => $color,
-        kerning => 0,
-        'interword-spacing' => 5,
-        text => $text);
+    my $x = 0;
+    $i = 0;
+
+    foreach my $piece (@pieces) {
+       # write text
+       $image->Annotate(
+         x => $x,
+         gravity => 'center',
+         font => 'nokiafc22.ttf',
+         pointsize => 8,
+         fill => $colors[$i],
+         kerning => 0,
+         'interword-spacing' => 5,
+         text => $piece);
+       $x += $width[$i++]+2;
+    }
 
     # write image
-    $image->Write(file=>\*IMAGE, filename=>'RGB:-');
-    close IMAGE;
+    $image->Write(filename=>'PNG:/tmp/text.pl.bork.png');
+    $image->Write(filename=>'RGB:/tmp/text.pl.bork.rgb');
 
-    return $rgb_string;
+    return read_file('/tmp/text.pl.bork.rgb');
 }
 
 my $color = shift @ARGV;
 my $text = shift @ARGV;
 my $image = read_image($color, $text);
+open RAW, '>text.pl.bork.raw';
+print RAW $image;
+close RAW;
 my $width = length($image) / (8 * 3);
 my $next_image;
 
