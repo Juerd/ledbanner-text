@@ -25,7 +25,7 @@ sub read_image {
        if ($piece =~ s/(#[0-9A-Fa-f]{6})//) {
          $colors[$i] = $1;
        }
-       print STDERR "DBG: color piece ".$i." = ".$colors[$i].": '".$piece."'\n";
+       # print STDERR "DBG: color piece ".$i." = ".$colors[$i].": '".$piece."'\n";
        # create empty image & query width
        $image->ReadImage('canvas:black');
        # see http://www.imagemagick.org/script/perl-magick.php#misc
@@ -37,9 +37,9 @@ sub read_image {
          kerning => 0,
          'interword-spacing' => 5,
          text => $piece);
-       printf STDERR "DBG: x_ppem %d, y_ppem %d, ascender %d, descender %d, width %d, height %d, max_advance %d, x1 %d, y1 %d, x2 %d, y3 %d\n", $x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance, $x1, $y1, $x1, $y2;
+     # printf STDERR "DBG: x_ppem %d, y_ppem %d, ascender %d, descender %d, width %d, height %d, max_advance %d, x1 %d, y1 %d, x2 %d, y3 %d\n", $x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance, $x1, $y1, $x1, $y2;
        $width[$i++] = $textwidth;
-       $allwidth += $textwidth-1;
+       $allwidth += $textwidth;
     }
 
     # create new empty image with width
@@ -51,7 +51,7 @@ sub read_image {
     $i = 0;
 
     foreach my $piece (@pieces) {
-       printf STDERR "DBG: Announce: %d, text '%s'\n", $x, $piece;
+        # printf STDERR "DBG: Announce: %d, text '%s'\n", $x, $piece;
        # write text
        $image->Annotate(
          x => $x,
@@ -62,7 +62,7 @@ sub read_image {
          kerning => 0,
          'interword-spacing' => 5,
          text => $piece);
-       $x += $width[$i++]-1;
+       $x += $width[$i++];
     }
 
     # write image
