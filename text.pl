@@ -18,12 +18,19 @@ sub read_image {
     my @pieces = split(/&:&/, $text);
     my @width;
     my @colors;
+    my @fonts;
     my $allwidth = 0;
     my $i = 0;
     foreach my $piece (@pieces) {
        $colors[$i] = $color;
-       if ($piece =~ s/(#[0-9A-Fa-f]{6})//) {
+       $fonts[$i]  = 'nokiafc22.ttf';
+       if ($piece =~ s/^(#[0-9A-Fa-f]{6})//) {
          $colors[$i] = $1;
+       }
+       if ($piece =~ s/^\{([a-z0-9]+\.ttf)\}//) {
+         if (-e $1) {
+           $fonts[$i] = $1;
+         }
        }
        $piece =~ s/\\//g;
        # print STDERR "DBG: color piece ".$i." = ".$colors[$i].": '".$piece."'\n";
@@ -32,7 +39,7 @@ sub read_image {
        # see http://www.imagemagick.org/script/perl-magick.php#misc
        my ($x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance, $x1, $y1, $x2, $y2) = $image->QueryFontMetrics(
          gravity => 'West',
-         font => 'nokiafc22.ttf',
+         font => $fonts[$i],
          pointsize => 8,
          fill => $color,
          kerning => 0,
@@ -57,7 +64,7 @@ sub read_image {
        $image->Annotate(
          x => $x,
          gravity => 'West',
-         font => 'nokiafc22.ttf',
+         font => $fonts[$i],
          pointsize => 8,
          fill => $colors[$i],
          kerning => 0,
