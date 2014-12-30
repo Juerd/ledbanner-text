@@ -25,22 +25,22 @@ sub read_image {
        if ($piece =~ s/(#[0-9A-Fa-f]{6})//) {
          $colors[$i] = $1;
        }
-       print STDERR "color piece ".$i." = ".$colors[$i].": ".$piece."\n";
-
+       print STDERR "DBG: color piece ".$i." = ".$colors[$i].": '".$piece."'\n";
        # create empty image & query width
        $image->ReadImage('canvas:black');
-       my ($x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance) = $image->QueryFontMetrics(
-         gravity => 'center',
+       # see http://www.imagemagick.org/script/perl-magick.php#misc
+       my ($x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance, $x1, $y1, $x2, $y2) = $image->QueryFontMetrics(
+         gravity => 'West',
          font => 'nokiafc22.ttf',
          pointsize => 8,
          fill => $color,
          kerning => 0,
          'interword-spacing' => 5,
          text => $piece);
+       printf STDERR "DBG: x_ppem %d, y_ppem %d, ascender %d, descender %d, width %d, height %d, max_advance %d, x1 %d, y1 %d, x2 %d, y3 %d\n", $x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance, $x1, $y1, $x1, $y2;
        $width[$i++] = $textwidth;
-       $allwidth += $textwidth+2;
+       $allwidth += $textwidth-1;
     }
-    $allwidth += 50;
 
     # create new empty image with width
     $image = Image::Magick->new;
@@ -51,32 +51,30 @@ sub read_image {
     $i = 0;
 
     foreach my $piece (@pieces) {
+       printf STDERR "DBG: Announce: %d, text '%s'\n", $x, $piece;
        # write text
        $image->Annotate(
          x => $x,
-         gravity => 'center',
+         gravity => 'West',
          font => 'nokiafc22.ttf',
          pointsize => 8,
          fill => $colors[$i],
          kerning => 0,
          'interword-spacing' => 5,
          text => $piece);
-       $x += $width[$i++]+2;
+       $x += $width[$i++]-1;
     }
 
     # write image
-    $image->Write(filename=>'PNG:/tmp/text.pl.bork.png');
-    $image->Write(filename=>'RGB:/tmp/text.pl.bork.rgb');
+    $image->Write(filename=>'PNG:/tmp/text.pl.png');
+    $image->Write(filename=>'RGB:/tmp/text.pl.rgb');
 
-    return read_file('/tmp/text.pl.bork.rgb');
+    return read_file('/tmp/text.pl.rgb');
 }
 
 my $color = shift @ARGV;
 my $text = shift @ARGV;
 my $image = read_image($color, $text);
-open RAW, '>text.pl.bork.raw';
-print RAW $image;
-close RAW;
 my $width = length($image) / (8 * 3);
 my $next_image;
 
