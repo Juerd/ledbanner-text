@@ -25,6 +25,7 @@ sub read_image {
        if ($piece =~ s/(#[0-9A-Fa-f]{6})//) {
          $colors[$i] = $1;
        }
+       $piece =~ s/\\//g;
        # print STDERR "DBG: color piece ".$i." = ".$colors[$i].": '".$piece."'\n";
        # create empty image & query width
        $image->ReadImage('canvas:black');
