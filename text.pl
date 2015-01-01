@@ -10,7 +10,7 @@ $| = 1;
 
 my $hex_re = '[0-9A-Fa-f]';
 my $color_re = "(?:#$hex_re\{3}|#$hex_re\{6})";
-my $font_re = '(?:\{([a-z0-9]+\.ttf)\})';
+my $font_re = '(?:\{[a-z0-9]+\.ttf\})';
 
 my @font_opts = (
     gravity => 'West',
@@ -36,9 +36,14 @@ sub read_image {
             $color = $1;
             next PIECE;
         }
-        if ($piece =~ /^($font_re)$/ and -e $1 and -r $1) {
-            $font = $1;
-            next PIECE;
+        if ($piece =~ /^($font_re)$/) {
+            my $fn = $1;
+            $fn =~ s/^\{//;
+            $fn =~ s/\}$//;
+            if (-e $fn and -r $fn) {
+		$font = $fn;
+	        next PIECE;
+            }
         }
         # see http://www.imagemagick.org/script/perl-magick.php#misc
         my $width = ($image->QueryFontMetrics(
