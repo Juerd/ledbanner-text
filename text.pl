@@ -9,7 +9,7 @@ undef $/;
 $| = 1;
 
 my $hex_re = '[0-9A-Fa-f]';
-my $color_re = "(?:#$hex_re\{3}|#$hex_re\{6})";
+my $color_re = "(?:#$hex_re\{6}|#$hex_re\{3})";
 my $font_re = '(?:\{[a-z0-9]+\.ttf\})';
 
 my @font_opts = (
