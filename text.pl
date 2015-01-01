@@ -32,28 +32,27 @@ sub read_image {
     my @width;
     my $i = 0;
     PIECE: foreach my $piece (grep defined && length, @input) {
-	if ($piece =~ /^($color_re)$/) {
-	    $color = $1;
-	    next PIECE;
-	}
-	if ($piece =~ /^($font_re)$/ and -e $1 and -r $1) {
-	    $font = $1;
-	    next PIECE;
-	}
-	# see http://www.imagemagick.org/script/perl-magick.php#misc
-	my ($x_ppem, $y_ppem, $ascender, $descender, $textwidth, $height, $max_advance, $x1, $y1, $x2, $y2) = $image->QueryFontMetrics(
-	 @font_opts,
-	    fill => $color,
-	    font => $font,
-	    text => $piece
-	);
+        if ($piece =~ /^($color_re)$/) {
+            $color = $1;
+            next PIECE;
+        }
+        if ($piece =~ /^($font_re)$/ and -e $1 and -r $1) {
+            $font = $1;
+            next PIECE;
+        }
+        # see http://www.imagemagick.org/script/perl-magick.php#misc
+        my $width = ($image->QueryFontMetrics(
+            @font_opts,
+            font => $font,
+            text => $piece
+        ))[4];
 
-	push @output, {
-	    width => $textwidth,
-	    color => $color,
-	    font  => $font,
-	    text  => $piece,
-	};
+        push @output, {
+            width => $width,
+            color => $color,
+            font  => $font,
+            text  => $piece,
+        };
     }
 
     # create new empty image with width
@@ -65,14 +64,14 @@ sub read_image {
     $i = 0;
 
     foreach my $piece (@output) {
-	$image->Annotate(
-	    @font_opts,
-	    x => $x,
-	    font => $piece->{font},
-	    fill => $piece->{color},
-	    text => $piece->{text}
-	);
-	$x += $piece->{width};
+        $image->Annotate(
+            @font_opts,
+            x => $x,
+            font => $piece->{font},
+            fill => $piece->{color},
+            text => $piece->{text}
+        );
+        $x += $piece->{width};
     }
 
     return $image->ImageToBlob(magick => "RGB");
@@ -87,19 +86,19 @@ my $next_image;
 for my $x (1 .. 80 + $width) {
     my $out = "\0" x 1920;
     for my $y (0..7) {
-	my $src_left = $y * $width;
-	if ($x > 80) {
-	    $src_left += $x - 80;
-	}
-	my $dst_left = $y * 80;
-	my $target   = $dst_left + (80 - ($x > 80 ? 80 : $x));
-	my $length   = ($x > 80 ? 80 : $x);
-	if ($x > $width) {
-	    $length += $width - $x;
-	}
-	
-	substr $out, $target * 3, $length * 3, #"\x40" x $length;
-	    substr $image, $src_left * 3, $length * 3;
+        my $src_left = $y * $width;
+        if ($x > 80) {
+            $src_left += $x - 80;
+        }
+        my $dst_left = $y * 80;
+        my $target   = $dst_left + (80 - ($x > 80 ? 80 : $x));
+        my $length   = ($x > 80 ? 80 : $x);
+        if ($x > $width) {
+            $length += $width - $x;
+        }
+
+        substr $out, $target * 3, $length * 3, #"\x40" x $length;
+            substr $image, $src_left * 3, $length * 3;
     }
     print $out;
     sleep 0.0253;
