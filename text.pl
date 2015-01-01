@@ -16,7 +16,7 @@ my @font_opts = (
     gravity => 'West',
     pointsize => 8,
     kerning => 0,
-    'interword-spacing' => 5,
+    'interword-spacing' => 3,
 );
 
 sub read_image {
