@@ -34,6 +34,16 @@ sub read_image {
     PIECE: foreach my $piece (grep defined && length, @input) {
         if ($piece =~ /^($color_re)$/) {
             $color = $1;
+            my @rgb = $color =~ /^(?|#(..)(..)(..)|#(.)(.)(.))/;
+            if (length($color) == 4) {
+                $_ x= 2 for @rgb;
+            }
+            for (@rgb) {
+                # minimum intensity per component
+                $_ = "16" if hex($_) > 0 and hex($_) < 0x16;
+            }
+            $color = join "", "#", @rgb;
+            $color = "#161616" if sum(map hex, @rgb) == 0;  # black on black is useless
             next PIECE;
         }
         if ($piece =~ /^($font_re)$/) {
